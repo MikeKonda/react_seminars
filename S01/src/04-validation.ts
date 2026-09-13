@@ -30,5 +30,17 @@ export const defaultRules: Rules = {
 };
 
 export function validateForm(data: IFormData, rules: Rules): Errors {
-    throw new Error("не реализовано");
+    let error: Errors = {};
+
+    if (!rules.username(data.username)){
+        error.username = `username error`;
+    }
+    if (!rules.email(data.email)){
+        error.email = `email error`;
+    }
+    if (!rules.age(data.age)){
+        error.age = `age error`;
+    }
+    
+    return error;
 }
