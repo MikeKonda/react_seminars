@@ -1,83 +1,41 @@
-import {
-  useState,
-  useMemo,
-  useRef,
-  useEffect,
-  useReducer,
-  useCallback,
-} from "react";
+import { useState, useMemo, useRef, useEffect, useTransition } from "react";
 import { products } from "./data";
+import { useCart } from "./hooks/useCart";
 import Header from "./components/Header";
 import SearchBar from "./components/SearchBar";
 import ProductList from "./components/ProductList";
 import "./App.css";
 
-const initialCart = { items: [] };
-
-function cartReducer(state, action) {
-  switch (action.type) {
-    case "add": {
-      const existing = state.items.find((it) => it.id === action.product.id);
-      if (existing) {
-        return {
-          items: state.items.map((it) =>
-            it.id === action.product.id ? { ...it, qty: it.qty + 1 } : it
-          ),
-        };
-      }
-      return { items: [...state.items, { ...action.product, qty: 1 }] };
-    }
-    case "remove":
-      return { items: state.items.filter((it) => it.id !== action.id) };
-    case "clear":
-      return initialCart;
-    default:
-      return state;
-  }
-}
-
 export default function App() {
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState("");       // срочно: текст в поле
+  const [filter, setFilter] = useState("");     // несрочно: список
   const [onlyInStock, setOnlyInStock] = useState(false);
-  const [cart, dispatch] = useReducer(cartReducer, initialCart);
+  const [isPending, startTransition] = useTransition();
 
   const inputRef = useRef(null);
   useEffect(() => {
     inputRef.current?.focus();
   }, []);
 
+  // вся корзина — из кастомного хука
+  const { totalCount, totalPrice, qtyById, add, remove, clear } = useCart();
+
+  // текст в поле — сразу, фильтр — в transition
+  function handleQueryChange(value) {
+    setQuery(value);
+    startTransition(() => {
+      setFilter(value);
+    });
+  }
+
   const visibleProducts = useMemo(() => {
-    const q = query.trim().toLowerCase();
+    const q = filter.trim().toLowerCase();
     return products.filter((p) => {
       if (onlyInStock && !p.inStock) return false;
       if (q && !p.title.toLowerCase().includes(q)) return false;
       return true;
     });
-  }, [query, onlyInStock]);
-
-  // стабильные производные значения
-  const totalCount = useMemo(
-    () => cart.items.reduce((s, it) => s + it.qty, 0),
-    [cart.items]
-  );
-  const totalPrice = useMemo(
-    () => cart.items.reduce((s, it) => s + it.price * it.qty, 0),
-    [cart.items]
-  );
-  const qtyById = useMemo(() => {
-    const map = {};
-    for (const it of cart.items) map[it.id] = it.qty;
-    return map;
-  }, [cart.items]);
-
-  // стабильные обработчики — обязательны для memo в ProductCard
-  const add = useCallback((product) => {
-    dispatch({ type: "add", product });
-  }, []);
-  const remove = useCallback((id) => {
-    dispatch({ type: "remove", id });
-  }, []);
-  const clear = useCallback(() => dispatch({ type: "clear" }), []);
+  }, [filter, onlyInStock]);
 
   return (
     <div className="app">
@@ -86,12 +44,15 @@ export default function App() {
       <SearchBar
         ref={inputRef}
         query={query}
-        onQueryChange={setQuery}
+        onQueryChange={handleQueryChange}
         onlyInStock={onlyInStock}
         onOnlyInStockChange={setOnlyInStock}
       />
 
-      <p className="found">Найдено: {visibleProducts.length}</p>
+      <p className="found">
+        Найдено: {visibleProducts.length}
+        {isPending && " — Обновляем список..."}
+      </p>
 
       <ProductList
         products={visibleProducts}
