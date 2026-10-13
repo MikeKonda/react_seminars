@@ -47,3 +47,23 @@ body { margin: 0; font-family: system-ui, sans-serif; background: #f5f7fb; }
   background: #1f3a8a; color: #fff; cursor: pointer;
 }
 .card button:disabled { background: #e2e8f0; color: #94a3b8; cursor: not-allowed; }
+
+.in-cart {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: auto;
+}
+
+.in-cart .qty-btn {
+  flex: 1;
+  background: #dbeafe;
+  color: #1f3a8a;
+  border: 1px solid #1f3a8a;
+}
+
+.in-cart .remove-btn {
+  background: #fff;
+  color: #1f3a8a;
+  border: 1px solid #1f3a8a;
+}
