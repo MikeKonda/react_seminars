@@ -1,4 +1,11 @@
-import { useState, useMemo, useRef, useEffect, useReducer } from "react";
+import {
+  useState,
+  useMemo,
+  useRef,
+  useEffect,
+  useReducer,
+  useCallback,
+} from "react";
 import { products } from "./data";
 import Header from "./components/Header";
 import SearchBar from "./components/SearchBar";
@@ -48,16 +55,29 @@ export default function App() {
     });
   }, [query, onlyInStock]);
 
-  const totalCount = cart.items.reduce((s, it) => s + it.qty, 0);
-  const totalPrice = cart.items.reduce((s, it) => s + it.price * it.qty, 0);
+  // стабильные производные значения
+  const totalCount = useMemo(
+    () => cart.items.reduce((s, it) => s + it.qty, 0),
+    [cart.items]
+  );
+  const totalPrice = useMemo(
+    () => cart.items.reduce((s, it) => s + it.price * it.qty, 0),
+    [cart.items]
+  );
+  const qtyById = useMemo(() => {
+    const map = {};
+    for (const it of cart.items) map[it.id] = it.qty;
+    return map;
+  }, [cart.items]);
 
-  // { [id]: qty }
-  const qtyById = {};
-  for (const it of cart.items) qtyById[it.id] = it.qty;
-
-  const add = (product) => dispatch({ type: "add", product });
-  const remove = (id) => dispatch({ type: "remove", id });
-  const clear = () => dispatch({ type: "clear" });
+  // стабильные обработчики — обязательны для memo в ProductCard
+  const add = useCallback((product) => {
+    dispatch({ type: "add", product });
+  }, []);
+  const remove = useCallback((id) => {
+    dispatch({ type: "remove", id });
+  }, []);
+  const clear = useCallback(() => dispatch({ type: "clear" }), []);
 
   return (
     <div className="app">

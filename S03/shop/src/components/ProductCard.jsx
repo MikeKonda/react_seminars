@@ -1,4 +1,13 @@
-export default function ProductCard({ product, qty, onAdd, onRemove }) {
+import { memo } from "react";
+
+const ProductCard = memo(function ProductCard({
+  product,
+  qty,
+  onAdd,
+  onRemove,
+}) {
+  console.log("render", product.id); // ← проверка шага 3
+
   return (
     <div className="card">
       <h3>{product.title}</h3>
@@ -11,7 +20,6 @@ export default function ProductCard({ product, qty, onAdd, onRemove }) {
         <button disabled>В корзину</button>
       ) : qty > 0 ? (
         <div className="in-cart">
-          {/* клик = add → qty + 1 */}
           <button
             className="qty-btn"
             onClick={() => onAdd(product)}
@@ -28,4 +36,6 @@ export default function ProductCard({ product, qty, onAdd, onRemove }) {
       )}
     </div>
   );
-}
+});
+
+export default ProductCard;
